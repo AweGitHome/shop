@@ -2,7 +2,6 @@ package com.leyou.search.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.leyou.common.pojo.PageResult;
 import com.leyou.item.pojo.*;
 import com.leyou.search.client.BrandClient;
 import com.leyou.search.client.CategoryClient;
@@ -14,24 +13,20 @@ import com.leyou.search.pojo.SearchResult;
 import com.leyou.search.repository.GoodsRepository;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.Operator;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.LongTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -112,6 +107,7 @@ public class SearchService {
         goods.setPrice(prices);
         goods.setSkus(MAPPER.writeValueAsString(skuMapList));
         goods.setSpecs(paramMap);
+        goods.setBrandId(spu.getBrandId());
         return goods;
     }
     private String chooseSegment(String value, SpecParam p) {
@@ -148,13 +144,15 @@ public class SearchService {
         }
         NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
         // 添加查询条件
-        MatchQueryBuilder basicQuery = QueryBuilders.matchQuery("all", request.getKey()).operator(Operator.AND);
-        queryBuilder.withQuery(basicQuery);
+        //MatchQueryBuilder basicQuery = QueryBuilders.matchQuery("all", request.getKey()).operator(Operator.AND);
+        BoolQueryBuilder boolQueryBuilder = buildBooleanQueryBuilder(request);
+        queryBuilder.withQuery(boolQueryBuilder);
         //添加结果集过滤
         queryBuilder.withSourceFilter(new FetchSourceFilter(new String[]{"id","skus","subTitle"},null));
         //添加分页条件
         queryBuilder.withPageable(PageRequest.of(request.getPage()-1,request.getSize()));
         //添加排序条件
+        if(StringUtils.isNotBlank(request.getSortBy()))
         queryBuilder.withSort(SortBuilders.fieldSort(request.getSortBy()).order(request.getDescending()? SortOrder.DESC:SortOrder.ASC));
 
         String categoryAggName = "categories";
@@ -167,7 +165,7 @@ public class SearchService {
         List<Brand> brandAggResult = getBrandAggResult(goodsPage.getAggregation(brandAggName));
         List<Map<String, Object>> specs = null;
         if (categoryAggResult.size() == 1){
-            specs = getParamAggResult((Long)categoryAggResult.get(0).get("id"), basicQuery);
+            specs = getParamAggResult((Long)categoryAggResult.get(0).get("id"), boolQueryBuilder);
         }
 
         //获取总条数
@@ -191,7 +189,7 @@ public class SearchService {
         buckets.forEach(bucket -> {
             cids.add(bucket.getKeyAsNumber().longValue());
         });
-        //利用cids列表查询出对于的类别名称
+        //利用cids列表查询出对应的类别名称
         List<String> names = this.categoryClient.queryNameByIds(cids);
         //给分类集合赋值
         for (int i = 0; i < cids.size(); i++) {
@@ -258,5 +256,53 @@ public class SearchService {
         }
 
         return paramMapList;
+    }
+
+    /**
+     * 构建bool查询构建器
+     * @param request
+     * @return
+     */
+    private BoolQueryBuilder buildBooleanQueryBuilder(SearchRequest request) {
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+
+        // 添加基本查询条件
+        boolQueryBuilder.must(QueryBuilders.matchQuery("all", request.getKey()).operator(Operator.AND));
+
+        // 添加过滤条件
+        if (CollectionUtils.isEmpty(request.getFilter())){
+            return boolQueryBuilder;
+        }
+        for (Map.Entry<String, String> entry : request.getFilter().entrySet()) {
+
+            String key = entry.getKey();
+            // 如果过滤条件是“品牌”, 过滤的字段名：brandId
+            if (StringUtils.equals("品牌", key)) {
+                key = "brandId";
+            } else if (StringUtils.equals("分类", key)) {
+                // 如果是“分类”，过滤字段名：cid3
+                key = "cid3";
+            } else {
+                // 如果是规格参数名，过滤字段名：specs.key.keyword
+                key = "specs." + key + ".keyword";
+            }
+            boolQueryBuilder.filter(QueryBuilders.termQuery(key, entry.getValue()));
+        }
+
+        return boolQueryBuilder;
+    }
+
+    public void createIndex(Long id) throws IOException {
+
+        Spu spu = this.goodsClient.querySpuById(id);
+        // 构建商品
+        Goods goods = this.buildGood(spu);
+
+        // 保存数据到索引库
+        this.goodsRepository.save(goods);
+    }
+
+    public void deleteIndex(Long id) {
+        this.goodsRepository.deleteById(id);
     }
 }

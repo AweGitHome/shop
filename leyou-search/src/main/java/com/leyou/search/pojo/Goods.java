@@ -14,17 +14,18 @@ import java.util.Map;
 @Data
 public class Goods {
     @Id
-    private Long id;
-    @Field(type = FieldType.Text,analyzer = "ik_max_word")
-    private String all;
-    private Long cid1;
-    private Long cid2;
-    private Long cid3;
-    @Field(type = FieldType.Keyword,index = false)
-    private String subTitle;
-    private Date createTime;
-    private List<Long> price;
-    @Field(type = FieldType.Keyword,index = false)
-    private String skus;
-    private Map<String,Object> specs;
+    private Long id; // spuId
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
+    private String all; // 所有需要被搜索的信息，包含标题，分类，甚至品牌
+    @Field(type = FieldType.Keyword, index = false)
+    private String subTitle;// 卖点
+    private Long brandId;// 品牌id
+    private Long cid1;// 1级分类id
+    private Long cid2;// 2级分类id
+    private Long cid3;// 3级分类id
+    private Date createTime;// 创建时间
+    private List<Long> price;// 价格
+    @Field(type = FieldType.Keyword, index = false)
+    private String skus;// List<sku>信息的json结构
+    private Map<String, Object> specs;// 可搜索的规格参数，key是参数名，值是参数值
 }

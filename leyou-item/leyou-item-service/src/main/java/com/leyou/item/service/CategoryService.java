@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,5 +44,12 @@ public class CategoryService {
         return categories.stream().map(category -> {
             return category.getName();
         }).collect(Collectors.toList());
+    }
+
+    public List<Category> queryAllByCid3(Long id) {
+        Category c3 = this.categoryMapper.selectByPrimaryKey(id);
+        Category c2 = this.categoryMapper.selectByPrimaryKey(c3.getParentId());
+        Category c1 = this.categoryMapper.selectByPrimaryKey(c2.getParentId());
+        return Arrays.asList(c1,c2,c3);
     }
 }

@@ -3,6 +3,8 @@ package com.leyou.search.pojo;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 public class SearchRequest {
     private String key;// 搜索条件
 
@@ -10,13 +12,15 @@ public class SearchRequest {
 
     @Getter
     @Setter
-    private String sortBy;
+    private String sortBy;//排序字段
 
     @Getter
     @Setter
-    private Boolean descending;
+    private Boolean descending;//是否降序
 
-
+    @Setter
+    @Getter
+    private Map<String,String> filter;
 
     private static final Integer DEFAULT_SIZE = 20;// 每页大小，不从页面接收，而是固定大小
     private static final Integer DEFAULT_PAGE = 1;// 默认页

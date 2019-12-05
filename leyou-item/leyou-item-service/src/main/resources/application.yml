@@ -1,6 +1,14 @@
 server:
   port: 8091
 spring:
+  rabbitmq:
+    host: 192.168.80.8
+    username: awe
+    password: 134368
+    virtual-host: /awe
+    template:
+      exchange: awe.item.exchange
+    publisher-confirms: true
   application:
     name: item-service
   datasource:

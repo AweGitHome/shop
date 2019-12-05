@@ -1,6 +1,11 @@
 server:
   port: 8093
 spring:
+  rabbitmq:
+    host: 192.168.80.8
+    username: awe
+    password: 134368
+    virtual-host: /awe
   application:
     name: search-service
   data:
