@@ -21,7 +21,7 @@ public class UploadService {
     @Autowired
     private FastFileStorageClient client;
     //指定上传的文件类型
-    private static final List<String> CONTENT_TYPES = Arrays.asList("image/jpeg", "image/gif");
+    private static final List<String> CONTENT_TYPES = Arrays.asList("image/jpeg", "image/gif", "image/png");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UploadService.class);
 

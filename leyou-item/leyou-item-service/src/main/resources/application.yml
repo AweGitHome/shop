@@ -7,7 +7,7 @@ spring:
     password: 134368
     virtual-host: /awe
     template:
-      exchange: awe.item.exchange
+      exchange: leyou.item.exchange
     publisher-confirms: true
   application:
     name: item-service

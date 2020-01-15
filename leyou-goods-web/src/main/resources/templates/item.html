@@ -6,7 +6,7 @@
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=9; IE=8; IE=7; IE=EDGE">
     <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
-    <title>乐优商城--商品详情页</title>
+    <title>awe商城--商品详情页</title>
     <link rel="icon" href="/assets/img/favicon.ico">
 
     <link rel="stylesheet" type="text/css" href="/css/webbase.css"/>
@@ -212,7 +212,7 @@
                                 <i>配 送 至</i>
                             </div>
                             <div class="fl fix-width">
-                                <em class="t-gray">上海 <span>有货</span></em>
+                                <em class="t-gray">湛江 <span>有货 剩余{{sku.stock}}</span></em>
                             </div>
                         </div>
                     </div>
@@ -236,18 +236,18 @@
                             <div class="fl title">
                                 <div class="control-group">
                                     <div class="controls">
-                                        <input autocomplete="off" type="text" disabled value="1" minnum="1"
+                                        <input autocomplete="off" type="text" v-model="num" disabled value="1" minnum="1"
                                                class="itxt"/>
-                                        <a href="javascript:void(0)" class="increment plus">+</a>
-                                        <a href="javascript:void(0)" class="increment mins">-</a>
+                                        <a href="javascript:void(0)" class="increment plus" @click="increment(sku)">+</a>
+                                        <a href="javascript:void(0)" class="increment mins" @click="decrement(sku)">-</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="fl">
                                 <ul class="btn-choose unstyled">
                                     <li>
-                                        <a href="success-cart.html" target="_blank"
-                                           class="sui-btn  btn-danger addshopcar">加入购物车</a>
+                                        <a href="javascript:void(0);"
+                                           class="sui-btn  btn-danger addshopcar" @click="addCart()">加入购物车</a>
                                     </li>
                                 </ul>
                             </div>
@@ -633,7 +633,6 @@
             </div>
         </div>
     </div>
-
 </div>
 <script src="/js/vue/vue.js"></script>
 <script src="/js/axios.min.js"></script>
@@ -648,7 +647,61 @@
             paramMap,
             specialSpec,
             genericSpec,
-            indexes
+            indexes,
+            num:0
+        },
+        methods:{
+          increment(sku){
+              if(sku.stock===0){
+                  alert("不能超过库存");
+              }else{
+                  sku.stock--;
+                  this.num++;
+              }
+          },
+          decrement(sku){
+              if(this.num>1){
+                this.num--;
+                sku.stock++;
+              }
+          },
+          addCart(){
+            ly.verifyUser().then(res=>{
+                if(this.num===0){
+                    alert("请选择至少一件商品");
+                    return;
+                }
+                // 已登录发送信息到后台，保存到redis中
+                ly.http.post("/cart", {skuId:this.sku.id,num:this.num}).then(res=>{
+                    window.location = "http://www.awe.com/cart.html";
+                }).catch(e=>{console.log(e)})
+            }).catch(()=>{
+                // 未登录保存在浏览器本地的localStorage中
+                // 1、查询本地购物车
+                let carts = ly.store.get("carts") || [];
+                let cart = carts.find(c=>c.skuId===this.sku.id);
+                // 2、判断是否存在
+                if (cart) {
+                    // 3、存在更新数量
+                    cart.num += this.num;
+                } else {
+                    // 4、不存在，新增
+                    cart = {
+                        skuId: this.sku.id,
+                        title: this.sku.title,
+                        price: this.sku.price,
+                        image: this.sku.images,
+                        num: this.num,
+                        ownSpec: this.ownSpec
+                    };
+                    carts.push(cart);
+                }
+                // 把carts写回localstorage
+                ly.store.set("carts", carts);
+                // 跳转
+                window.location.href = "http://www.awe.com/cart.html";
+            });
+          }
         },
         computed: {
             images() {

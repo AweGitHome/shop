@@ -45,6 +45,10 @@ public class GoodsService {
         this.amqpTemplate = amqpTemplate;
     }
 
+    public Sku querySkuById(Long id) {
+        return this.skuMapper.selectByPrimaryKey(id);
+    }
+
     /**
      *
      * @param key 根据标题搜索
@@ -172,4 +176,20 @@ public class GoodsService {
             logger.error("{}商品消息发送异常，商品id：{}", type, id, e);
         }
     }
+
+    @Transactional
+    public Integer updateStock(Long skuId,Integer num,Integer flag){
+        Stock stock = this.stockMapper.selectByPrimaryKey(skuId);
+        if(flag==1){//新增订单，减少库存
+            if(num>stock.getStock()){
+                return -1;
+            }
+            stock.setStock(stock.getStock()-num);
+        }else{
+            stock.setStock(stock.getStock()+num);
+        }
+        this.stockMapper.updateByPrimaryKey(stock);
+        return 1;
+    }
+
 }

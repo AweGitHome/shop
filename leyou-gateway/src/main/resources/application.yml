@@ -9,8 +9,43 @@ eureka:
       defaultZone: http://127.0.0.1:10086/eureka
     registry-fetch-interval-seconds: 5
 zuul:
-  prefix: /api #路由前缀
+  prefix: /api
   routes:
     item-service: /item/**
+    user-service: /user/**
+    auth-service: /auth/**
+    cart-service: /cart/**
+    order-service: /order-service/**
     search-service: /search/**
   ignored-services: upload-service
+  add-host-header: true
+  sensitive-headers:
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 7000
+ribbon:
+  connetTimeout: 500
+  readTimeout: 5000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+awe:
+  jwt:
+    pubKeyPath: D:\\tmp\\rsa\\rsa.pub # 公钥地址
+    cookieName: AWE-TOKEN
+  filter:
+    allowPaths:
+      - /api/auth
+      - /api/search
+      - /api/user/register
+      - /api/user/check
+      - /api/user/code
+      - /api/item
+
+

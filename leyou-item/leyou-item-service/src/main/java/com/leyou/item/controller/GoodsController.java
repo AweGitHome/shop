@@ -31,6 +31,15 @@ public class GoodsController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("sku/{id}")
+    public ResponseEntity<Sku> querySkuById(@PathVariable("id")Long id){
+        Sku sku = this.goodsService.querySkuById(id);
+        if (sku == null){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return ResponseEntity.ok(sku);
+    }
+
     @PostMapping("goods")
     public ResponseEntity<Void> saveGood(@RequestBody SpuBo spuBo){
         if (spuBo == null ){
@@ -82,6 +91,12 @@ public class GoodsController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return ResponseEntity.ok(spu);
+    }
+
+    @PutMapping("stock/{skuId}/{num}/{flag}")
+    public ResponseEntity<Integer> updateStock(@PathVariable("skuId") Long skuId,@PathVariable("num") Integer num,@PathVariable("flag") Integer flag){
+        Integer integer = this.goodsService.updateStock(skuId, num, flag);
+        return ResponseEntity.ok(integer);
     }
 
 

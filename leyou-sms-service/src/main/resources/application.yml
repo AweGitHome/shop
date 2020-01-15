@@ -1,0 +1,33 @@
+server:
+  port: 8096
+spring:
+  application:
+    name: sms-service
+  rabbitmq:
+    host: 192.168.80.8
+    username: awe
+    password: 134368
+    virtual-host: /awe
+    listener:
+      direct:
+        retry:
+          enabled: true
+          max-attempts: 5
+          initial-interval: 5000
+          max-interval: 1200000
+          multiplier: 5
+  redis:
+    host: 192.168.80.8
+leyou:
+  sms:
+    accessKeyId: LTAI4FrkNMtwpD5m4pLuyL1v # 你自己的accessKeyId
+    accessKeySecret: uIhLGaBJ7sQ3c9DPNVoIYdsZD25idF # 你自己的AccessKeySecret
+    signName: awe商城 # 签名名称
+    verifyCodeTemplate: SMS_179611881 # 模板名称
+awe:
+  email:
+    sendAddress: awe8025@126.com
+    password: aweshop123
+    smtpHost: smtp.126.com
+    protocol: smtp
+    template: 你正在注册awe商城的会员，请妥善保管好你的验证码：
